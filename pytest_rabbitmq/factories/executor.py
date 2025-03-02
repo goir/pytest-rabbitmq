@@ -79,3 +79,63 @@ class RabbitMqExecutor(TCPExecutor):
                 queues.append(str(queue))
 
         return queues
+
+class RabbitMqNoopExecutor:
+    _UNWANTED_QUEUE_PATTERN = re.compile("(done|timeout:|listing queues)")
+
+    def __init__(
+        self,
+        host: str,
+        port: int,
+        distribution_port: int,
+        rabbit_ctl: str
+    ) -> None:  # pylint:disable=too-many-arguments
+        """Initialize RabbitMQ executor.
+
+        :param command: rabbitmq-server location
+        :param host: host where rabbitmq will be accessible
+        :param port: port under which rabbitmq runs
+        :param rabbit_ctl: rabbitctl location
+        :param logpath:
+        :param path: Path containing rabbitmq'a mnesia na plugins
+        :param node_name: RabbitMQ node name
+        """
+        self.host = host
+        self.port = port
+        # super().__init__([], host, port, timeout=60)
+        # self.rabbit_ctl = rabbit_ctl
+        pass
+
+
+
+    # def rabbitctl_output(self, *args: str) -> str:
+    #     """Query rabbitctl with args.
+    #
+    #     :param list args: list of additional args to query
+    #     """
+    #     ctl_command: List[str] = [self.rabbit_ctl]
+    #     ctl_command.extend(args)
+    #     return subprocess.check_output(ctl_command, env=self._popen_kwargs["env"]).decode("utf-8")
+    #
+    # def list_exchanges(self) -> List[str]:
+    #     """Get exchanges defined on given rabbitmq."""
+    #     exchanges: List[str] = []
+    #     output = self.rabbitctl_output("list_exchanges", "name")
+    #     unwanted_exchanges = ["Listing exchanges for vhost / ...", "...done."]
+    #
+    #     for exchange in output.split("\n"):
+    #         if exchange and exchange not in unwanted_exchanges:
+    #             exchanges.append(str(exchange))
+    #
+    #     return exchanges
+    #
+    # def list_queues(self) -> List[str]:
+    #     """Get queues defined on given rabbitmq."""
+    #     queues: List[str] = []
+    #     output = self.rabbitctl_output("list_queues", "name")
+    #
+    #     for queue in output.split("\n"):
+    #         if queue and not self._UNWANTED_QUEUE_PATTERN.search(queue.strip(". ").lower()):
+    #             queues.append(str(queue))
+    #
+    #     return queues

@@ -110,4 +110,5 @@ def pytest_addoption(parser: Parser) -> None:
 
 
 rabbitmq_proc = factories.rabbitmq_proc()
-rabbitmq = factories.rabbitmq("rabbitmq_proc")
+rabbitmq_noproc = factories.rabbitmq_noproc()
+rabbitmq = factories.rabbitmq("rabbitmq_noproc")

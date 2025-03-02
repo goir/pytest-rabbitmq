@@ -36,7 +36,7 @@ from mirakuru.exceptions import ProcessExitedWithError
 from port_for import get_port
 from pytest import FixtureRequest, TempPathFactory
 
-from pytest_rabbitmq.factories.executor import RabbitMqExecutor
+from pytest_rabbitmq.factories.executor import RabbitMqExecutor, RabbitMqNoopExecutor
 
 PortType = Union[
     None,
@@ -197,3 +197,74 @@ def rabbitmq_proc(
             pass
 
     return rabbitmq_proc_fixture
+
+def rabbitmq_noproc(
+    server: Optional[str] = None,
+    host: Optional[str] = None,
+    port: PortType = -1,
+    distribution_port: PortType = -1,
+    node: Optional[str] = None,
+    ctl: Optional[str] = None,
+    logsdir: Optional[Path] = None,
+    plugindir: Optional[Path] = None,
+) -> Callable[[FixtureRequest, TempPathFactory], Generator[RabbitMqExecutor, None, None]]:
+    """Fixture factory for RabbitMQ process.
+
+    :param server: path to rabbitmq-server command
+    :param host: server host
+    :param port:
+        exact port (e.g. '8000', 8000)
+    :param distribution_port:
+        exact port (e.g. '8000', 8000)
+
+    :returns pytest fixture with RabbitMQ process executor
+    """
+
+    @pytest.fixture(scope="session")
+    def rabbitmq_noproc_fixture(
+        request: FixtureRequest, tmp_path_factory: TempPathFactory
+    ) -> Generator[RabbitMqNoopExecutor, None, None]:
+        """Fixture for RabbitMQ process.
+
+        #. Get config.
+        #. Make a temporary directory.
+        #. Setup required environment variables:
+        #.  * RABBITMQ_LOG_BASE
+        #.  * RABBITMQ_MNESIA_BASE
+        #.  * RABBITMQ_ENABLED_PLUGINS_FILE
+        #.  * RABBITMQ_NODE_PORT
+        #.  * RABBITMQ_DIST_PORT
+        #.  * RABBITMQ_NODENAME
+        #. Start a rabbit server
+            `<http://www.rabbitmq.com/man/rabbitmq-server.1.man.html>`_
+        #. Stop rabbit server and remove temporary files after tests.
+
+        :param FixtureRequest request: fixture request object
+        :rtype: pytest_rabbitmq.executors.TCPExecutor
+        :returns: tcp executor of running rabbitmq-server
+        """
+        config = get_config(request)
+        rabbit_ctl = ctl or config["ctl"]
+        rabbit_server = server or config["server"]
+        rabbit_host = host or config["host"]
+        rabbit_port = get_port(port) or get_port(config["port"])
+        assert rabbit_port
+        rabbit_distribution_port = get_port(distribution_port, [rabbit_port]) or get_port(
+            config["distribution_port"], [rabbit_port]
+        )
+        assert rabbit_distribution_port
+        assert (
+            rabbit_distribution_port != rabbit_port
+        ), "rabbit_port and distribution_port can not be the same!"
+
+
+        rabbit_executor = RabbitMqNoopExecutor(
+            rabbit_host,
+            rabbit_port,
+            rabbit_distribution_port,
+            rabbit_ctl
+        )
+
+        yield rabbit_executor
+
+    return rabbitmq_noproc_fixture
