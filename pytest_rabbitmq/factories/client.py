@@ -70,7 +70,7 @@ def clear_rabbitmq(process: RabbitMqExecutor, rabbitmq_connection: BlockingConne
 
 def rabbitmq(
     process_fixture_name: str,
-    teardown: Callable[[RabbitMqExecutor, BlockingConnection], None] = clear_rabbitmq,
+    teardown: Callable[[RabbitMqExecutor, BlockingConnection], None] = None,
 ) -> Callable[[FixtureRequest], Generator[BlockingConnection, None, None]]:
     """Client fixture factory for RabbitMQ.
 
@@ -110,7 +110,8 @@ def rabbitmq(
         connection = BlockingConnection(parameters)
 
         yield connection
-        teardown(process, connection)
+        if teardown is not None:
+            teardown(process, connection)
         try:
             connection.close()
         except ChannelClosed as e:
